@@ -73,8 +73,6 @@ calibration_dataset = nncf.Dataset(val_loader, transform_fn)
 quantized_model = nncf.quantize(model, calibration_dataset)
 
 fp32_top1 = validate(model, val_loader)
-
 int8_top1 = validate(quantized_model, val_loader)
-
 print(f'FP32: accuracy @ top1: {fp32_top1}')
 print(f'INT8: accuracy @ top1: {int8_top1}')

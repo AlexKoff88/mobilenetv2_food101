@@ -2,3 +2,4 @@ torch
 torchvision
 tqdm
 sklearn
+git+https://github.com/alexsu52/nncf.git@732e630#egg=nncf
