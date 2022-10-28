@@ -22,28 +22,10 @@ def fix_names(state_dict):
     return state_dict
 
 def load_checkpoint(model):  
-    #'https://github.com/AlexKoff88/mobilenetv2_food101/raw/48a0362e617f6fb06b9519037fa1d1ddfbbc77fd/checkpoints/pytorch_model.bin'
     checkpoint = torch.hub.load_state_dict_from_url(CHECKPOINT_URL, progress=False)
     weights = fix_names(checkpoint['state_dict'])
     model.load_state_dict(weights)
     return model
-
-def accuracy(output, target, topk=(1,)):
-    """Computes the accuracy over the k top predictions for the specified values of k"""
-    maxk = max(topk)
-    batch_size = target.size(0)
-
-    _, pred = output.topk(maxk, 1, True, True)
-    pred = pred.t()
-    pred = pred.cpu()
-    target = target.cpu()
-    correct = pred.eq(target.view(1, -1).expand_as(pred))
-
-    res = []
-    for k in topk:
-        correct_k = correct[:k].reshape(-1).float().sum(0, keepdim=True)
-        res.append(correct_k.mul_(100.0 / batch_size))
-    return res
 
 def validate(model, val_loader):
     predictions = []
@@ -53,23 +35,16 @@ def validate(model, val_loader):
         for images, target in tqdm(val_loader):
             output = model(images)
     
-            predictions.append(output)
+            predictions.append(np.argmax(output, axis=1))
             references.append(target)
 
-            break
+    predictions = np.concatenate(predictions, axis=0)
+    references = np.concatenate(references, axis=0)  
 
-        predictions = torch.cat(predictions, axis=0)
-        references = torch.cat(references, axis=0)
-        
-        print(torch.argmax(predictions, axis=1))
-        print(references)
-
-        metric = accuracy(output, target)
-        print(f'Accuracy @ top1: {metric}')
+    return accuracy_score(predictions, references)
 
 normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                     std=[0.229, 0.224, 0.225])
-
 val_dataset = datasets.Food101(
     root=DATASET_PATH,
     split = 'test', 
@@ -88,7 +63,9 @@ model = models.mobilenet_v2(num_classes=FOOD101_CLASSES)
 model.eval()
 model = load_checkpoint(model)
 
-validate(model, val_loader)
+top1 = validate(model, val_loader)
+
+print(f'Accuracy @ top1: {top1}')
 
 
    
