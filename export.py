@@ -11,10 +11,7 @@ def fix_names(state_dict):
     state_dict = {key.replace('module.', ''): value for (key, value) in state_dict.items()}
     return state_dict
 
-model = models.mobilenet_v2()    
-
-num_ftrs = model.classifier[1].in_features
-model.classifier[1] = nn.Linear(num_ftrs, FOOD101_CLASSES)
+model = models.mobilenet_v2(num_classes=FOOD101_CLASSES)    
 
 if len(sys.argv) > 1:
     checkpoint_path = sys.argv[1]
@@ -22,7 +19,6 @@ if len(sys.argv) > 1:
     if os.path.isfile(checkpoint_path):
         print("=> loading checkpoint '{}'".format(checkpoint_path))
         
-
         checkpoint = torch.load(checkpoint_path)
         weights = fix_names(checkpoint['state_dict'])
         model.load_state_dict(weights)
